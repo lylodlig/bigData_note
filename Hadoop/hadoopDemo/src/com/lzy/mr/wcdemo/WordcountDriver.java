@@ -30,7 +30,7 @@ public class WordcountDriver {
 		/*conf.set("fs.defaultFS", "file:///");*/
 		
 		
-		
+//		System.setProperty("HADOOP_USER_NAME", "hadoop");
 		//运行集群模式，就是把程序提交到yarn中去运行
 		//要想运行为集群模式，以下3个参数要指定为集群上的值
 		/*conf.set("mapreduce.framework.name", "yarn");
@@ -38,7 +38,7 @@ public class WordcountDriver {
 		conf.set("fs.defaultFS", "hdfs://sm1:9000/");*/
 		Job job = Job.getInstance(conf);
 		
-		job.setJar("c:/wc.jar");
+		job.setJar("G:/BigData/WorkSpace/wc.jar");
 		//指定本程序的jar包所在的本地路径
 		/*job.setJarByClass(WordcountDriver.class);*/
 		
