@@ -280,13 +280,13 @@ mini7
 			scp -r tmp/ hadoop02:/home/hadoop/app/hadoop-2.6.4/
 			##也可以这样，建议hdfs namenode -bootstrapStandby
 		
-		2.8格式化ZKFC(在mini1上执行一次即可)
+		2.8格式化ZKFC(在mini1上执行一次即可，随意一台机器执行)
 			hdfs zkfc -formatZK
 		
 		2.9启动HDFS(在mini1上执行)
 			sbin/start-dfs.sh
 
-		2.10启动YARN(#####注意#####：是在hadoop02上执行start-yarn.sh，把namenode和resourcemanager分开是因为性能问题，因为他们都要占用大量资源，所以把他们分开了，他们分开了就要分别在不同的机器上启动)
+		2.10启动YARN(#####注意#####：是在hadoop02上执行start-yarn.sh，（也就是要在ResourceManager所在的机器上启动）把namenode和resourcemanager分开是因为性能问题，因为他们都要占用大量资源，所以把他们分开了，他们分开了就要分别在不同的机器上启动)
 			sbin/start-yarn.sh
 
 		
