@@ -1,0 +1,19 @@
+
+#创建分桶表
+create table stu_buck(sno int,sname string,sex string,sage int,sdept string)
+clustered by(sno) 
+sorted by(sno DESC)
+into 4 buckets
+row format delimited
+fields terminated by ',';
+
+#设置变量,设置分桶为true, 设置reduce数量是分桶的数量个数
+set hive.enforce.bucketing = true;
+set mapreduce.job.reduces=4;
+
+#开会往创建的分通表插入数据(插入数据需要是已分桶, 且排序的)
+#可以使用distribute by(sno) sort by(sno asc)   或是排序和分桶的字段相同的时候使用Cluster by(字段)
+#注意使用cluster by  就等同于分桶+排序(sort)
+insert into table stu_buck
+select sno,sname,sex,sage,sdept from student distribute by(sno) sort by(sno asc);
+
