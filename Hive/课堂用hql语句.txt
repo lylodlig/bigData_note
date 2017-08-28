@@ -1,11 +1,31 @@
-show databases;
-show tables;
-desc test;
-
 -------------
-分桶表示例：
+本地模式
+set hive.exec.mode.local.auto=true
+--------------------------------
+动态分区
+--设置为true表示开启动态分区功能（默认为false）
+set hive.exec.dynamic.partition=true;
+--设置为nonstrict,表示允许所有分区都是动态的（默认为strict）
+set hive.exec.dynamic.partition.mode=nonstrict;
 
-#创建分桶表
+hive> desc t_part2;
+OK
+id                      int                                         
+name                    string                                      
+ar                      string                                                       
+# Partition Information          
+# col_name              data_type               comment                           
+ar                      string  
+
+hive> insert into table t_part2 partition(ar)
+    > select id,name,'3' from t_tmp;
+
+--------------------------------
+分桶表示例：
+#指定开启分桶
+set hive.enforce.bucketing = true;
+set mapreduce.job.reduces=4;
+
 drop table stu_buck;
 create table stu_buck(Sno int,Sname string,Sex string,Sage int,Sdept string)
 clustered by(Sno) 
@@ -15,18 +35,11 @@ row format delimited
 fields terminated by ',';
 
 
-#设置变量,设置分桶为true, 设置reduce数量是分桶的数量个数
-set hive.enforce.bucketing = true;
-set mapreduce.job.reduces=4;
-
-
 insert overwrite table student_buck
 select * from student cluster by(Sno) sort by(Sage);  报错,cluster 和 sort 不能共存
 
 
-#开会往创建的分通表插入数据(插入数据需要是已分桶, 且排序的)
-#可以使用distribute by(sno) sort by(sno asc)   或是排序和分桶的字段相同的时候使用Cluster by(字段)
-#注意使用cluster by  就等同于分桶+排序(sort)
+
 insert into table stu_buck
 select Sno,Sname,Sex,Sage,Sdept from student distribute by(Sno) sort by(Sno asc);
 
@@ -86,7 +99,7 @@ load data local inpath '/home/hadoop/b.txt' into table b;
 
 
 实验：
-** inner join（交集）
+** inner join
 select * from a inner join b on a.id=b.id;
 +-------+---------+-------+---------+--+
 | a.id  | a.name  | b.id  | b.name  |
@@ -100,7 +113,7 @@ select * from a inner join b on a.id=b.id;
 
 
 
-**left join（左边的全部）
+**left join
 select * from a left join b on a.id=b.id;
 +-------+---------+-------+---------+--+
 | a.id  | a.name  | b.id  | b.name  |
@@ -117,14 +130,14 @@ select * from a left join b on a.id=b.id;
 
 
 
-**right join（右边的全部）
+**right join
 select * from a right join b on a.id=b.id;
 
 
 
 
 
-**full outer(两边都会出来)
+**
 select * from a full outer join b on a.id=b.id;
 +-------+---------+-------+---------+--+
 | a.id  | a.name  | b.id  | b.name  |
