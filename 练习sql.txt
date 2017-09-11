@@ -1,0 +1,102 @@
+1.创建原始数据表
+贴源数据表ods_weblog_origin
+drop table if exists shizhan.ods_weblog_origin;
+create table shizhan.ods_weblog_origin(
+valid string,
+remote_addr string,
+remote_user string,
+time_local string,
+request string,
+status string,
+body_bytes_sent string,
+http_referer string,
+http_user_agent string
+)
+partitioned by (datestr string)
+row format delimited fields terminated by ',';
+
+点击流模型表pageviews表ods_click_pageviews
+drop table if exists ods_click_pageviews;
+create table ods_click_pageviews(
+Session string,
+remote_addr string,
+remote_user string,
+time_local string,
+request string,
+visit_step string,
+page_staylong string,
+http_referer string,
+http_user_agent string,
+body_bytes_sent string,
+status string
+)
+partitioned by (datestr string)
+row format delimited fields terminated by ',';
+
+点击流visit模型表   click_stream_visit
+drop table if exist click_stream_visit;
+create table click_stream_visit(
+session     string,
+remote_addr string,
+inTime      string,
+outTime     string,
+inPage      string,
+outPage     string,
+referal     string,
+pageVisits  int)
+partitioned by (datestr string);
+
+时间维表创建
+drop table dim_time if exists ods_click_pageviews;
+create table dim_time(
+year string,
+month string,
+day string,
+hour string)
+row format delimited
+fields terminated by ',';
+
+2、导入数据
+导入清洗结果数据到贴源数据表ods_weblog_origin
+load data inpath '/weblog/preprocessed/16-02-24-16/' overwrite into table ods_weblog_origin partition(datestr='2013-09-18');
+导入点击流模型pageviews数据到ods_click_pageviews表
+load data inpath '/weblog/clickstream/pageviews' overwrite into table ods_click_pageviews partition(datestr='2013-09-18');
+导入点击流模型visit数据到click_stream_visit表
+load data local inpath '/weblog/clickstream/visits' overwrite into table click_stream_visit partition(datestr='2013-09-18');
+
+3、操作
+生成宽表
+drop table ods_weblog_detail;
+create table ods_weblog_detail(
+valid           string, --有效标识
+remote_addr     string, --来源IP
+remote_user     string, --用户标识
+time_local      string, --访问完整时间
+daystr          string, --访问日期
+timestr         string, --访问时间
+month           string, --访问月
+day             string, --访问日
+hour            string, --访问时
+request         string, --请求的url
+status          string, --响应码
+body_bytes_sent string, --传输字节数
+http_referer    string, --来源url
+ref_host        string, --来源的host
+ref_path        string, --来源的路径
+ref_query       string, --来源参数query
+ref_query_id    string, --来源参数query的值
+http_user_agent string --客户终端标识
+) 
+partitioned by(datestr string);
+
+
+1将来访url分离出host、path、query、query_id
+
+
+create table v_time(year string,month string, day string,hour string)
+row format delimited fields terminated by ',';
+
+加载数据到hive
+load data local inpath '/home/hadoop/v_time.txt' into table v_time;
+
+1.统计某个小时的pvs
