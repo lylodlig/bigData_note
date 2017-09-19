@@ -1,0 +1,5 @@
+1多行编辑
+shfit+alt+a
+2ctrl+2 命名
+3窗口切换
+ctrl + pageUP/pageDown
