@@ -13,11 +13,16 @@ import java.util.UUID;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.comparators.ComparableComparator;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import com.lzy.main.WeblogBean;
 
@@ -33,7 +38,31 @@ import com.lzy.main.WeblogBean;
  * 
  */
 public class ClickStreamViews {
-
+	
+	
+	public static void main(String[] args) throws Exception{
+		
+		Configuration configuration=new Configuration();
+		Job job=Job.getInstance(configuration);
+		
+		job.setJarByClass(ClickStreamViews.class);
+		
+		job.setMapperClass(ClickStreamViewsMapper.class);
+		job.setReducerClass(ClickStreamViewsReducer.class);
+		
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(WeblogBean.class);
+		
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(Text.class);
+		
+		FileInputFormat.setInputPaths(job, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job, new Path(args[1]));
+		
+		job.waitForCompletion(true);
+		
+	}
+	
 	static class ClickStreamViewsMapper extends Mapper<LongWritable, Text, Text, WeblogBean> {
 		Text k = new Text();
 
@@ -59,9 +88,13 @@ public class ClickStreamViews {
 	}
 
 	static class ClickStreamViewsReducer extends Reducer<Text, WeblogBean, NullWritable, Text> {
+
+		Text v = new Text();
+
 		@Override
 		protected void reduce(Text key, Iterable<WeblogBean> values,
-				Reducer<Text, WeblogBean, NullWritable, Text>.Context arg2) throws IOException, InterruptedException {
+				Reducer<Text, WeblogBean, NullWritable, Text>.Context context)
+				throws IOException, InterruptedException {
 			// 把结果放到集合中
 			ArrayList<WeblogBean> beans = new ArrayList<>();
 			for (WeblogBean weblogBean : values) {
@@ -95,14 +128,48 @@ public class ClickStreamViews {
 					}
 				}
 			});
+			try {
+				int step = 1;
+				String session = UUID.randomUUID().toString();
+				for (int i = 0; i < beans.size(); i++) {
+					WeblogBean bean = beans.get(i);
+					// 只有一条数据直接输出,输出格式为：session user date url 停留时间 第几步
+					if (beans.size() == 1) {
+						v.set(session + "\001" + bean.remote_ip + "\001" + bean.time_local + "\001" + bean.request
+								+ "\001" + "60" + "\001" + step);
+						context.write(NullWritable.get(), v);
+						session = UUID.randomUUID().toString();
+						break;
+					}
+					// 不止一条时跳过，第二条再输出
+					if (i == 0)
+						continue;
+					// 计算两次时间差
+					long timeDiff = timeDiff(bean.time_local, beans.get(i - 1).time_local);
+					WeblogBean lastBaen = beans.get(i - 1);
+					if (timeDiff < 30 * 60 * 1000) {
+						v.set(session + "\001" + lastBaen.remote_ip + "\001" + lastBaen.time_local + "\001"
+								+ lastBaen.request + "\001" + timeDiff + "\001" + step);
+						step++;
+						context.write(NullWritable.get(), v);
+					} else {
+						v.set(session + "\001" + lastBaen.remote_ip + "\001" + lastBaen.time_local + "\001"
+								+ lastBaen.request + "\001" + timeDiff + "\001" + step);
+						context.write(NullWritable.get(), v);
+						// 输出完上一条重置step
+						step = 1;
+						session = UUID.randomUUID().toString();
+					}
 
-			int step = 1;
-			String session = UUID.randomUUID().toString();
-			for (int i = 0; i < beans.size(); i++) {
-				//只有一条数据直接输出
-				if (beans.size() == 1) {
+					if (i == beans.size() - 1) {// 最后一条，直接输出
+						v.set(session + "\001" + bean.remote_ip + "\001" + bean.time_local + "\001"
+								+ bean.request + "\001" + timeDiff + "\001" + step);
+						context.write(NullWritable.get(), v);
+					}	
 
 				}
+			} catch (ParseException e) {
+				e.printStackTrace();
 			}
 		}
 
