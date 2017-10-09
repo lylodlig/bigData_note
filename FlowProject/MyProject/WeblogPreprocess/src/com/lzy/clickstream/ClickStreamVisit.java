@@ -6,11 +6,16 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 
 public class ClickStreamVisit {
@@ -54,8 +59,7 @@ public class ClickStreamVisit {
 
 					@Override
 					public int compare(PageViewsBean o1, PageViewsBean o2) {
-
-						return o1.getStep() > o2.getStep() ? 1 : -1;
+						return o1.step > o2.step ? 1 : -1;
 					}
 				});
 
@@ -63,17 +67,17 @@ public class ClickStreamVisit {
 				VisitBean visitBean = new VisitBean();
 				// 取visit的首记录
 				visitBean.inPage=pvBeansList.get(0).request;
-				visitBean.setInTime(pvBeansList.get(0).getTimestr());
+				visitBean.inTime=pvBeansList.get(0).timestr;
 				// 取visit的尾记录
-				visitBean.setOutPage(pvBeansList.get(pvBeansList.size() - 1).getRequest());
-				visitBean.setOutTime(pvBeansList.get(pvBeansList.size() - 1).getTimestr());
+				visitBean.outPage=pvBeansList.get(pvBeansList.size() - 1).request;
+				visitBean.outTime=pvBeansList.get(pvBeansList.size() - 1).timestr;
 				// visit访问的页面数
-				visitBean.setPageVisits(pvBeansList.size());
+				visitBean.pageVisits=pvBeansList.size();
 				// 来访者的ip
-				visitBean.setRemote_addr(pvBeansList.get(0).getRemote_addr());
+				visitBean.remote_addr=pvBeansList.get(0).remote_ip;
 				// 本次visit的referal
-				visitBean.setReferal(pvBeansList.get(0).getReferal());
-				visitBean.setSession(session.toString());
+				visitBean.referal=pvBeansList.get(0).referal;
+				visitBean.session=session.toString();
 
 				context.write(NullWritable.get(), visitBean);
 
@@ -97,10 +101,10 @@ public class ClickStreamVisit {
 			job.setOutputValueClass(VisitBean.class);
 			
 			
-//			FileInputFormat.setInputPaths(job, new Path(args[0]));
-//			FileOutputFormat.setOutputPath(job, new Path(args[1]));
-			FileInputFormat.setInputPaths(job, new Path("C:/weblog/pageviews"));
-			FileOutputFormat.setOutputPath(job, new Path("c:/weblog/visitout"));
+			FileInputFormat.setInputPaths(job, new Path(args[0]));
+			FileOutputFormat.setOutputPath(job, new Path(args[1]));
+//			FileInputFormat.setInputPaths(job, new Path("C:/weblog/pageviews"));
+//			FileOutputFormat.setOutputPath(job, new Path("c:/weblog/visitout"));
 			
 			boolean res = job.waitForCompletion(true);
 			System.exit(res?0:1);
