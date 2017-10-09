@@ -1,6 +1,12 @@
 package com.lzy.main;
 
-public class WeblogBean {
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+import org.apache.hadoop.io.Writable;
+
+public class WeblogBean implements Writable{
 	public String remote_ip;// 记录客户端的ip地址
 	public String remote_user;// 记录客户端用户名称,忽略属性"-"
 	public String time_local;// 记录访问时间与时区
@@ -25,5 +31,31 @@ public class WeblogBean {
 		sb.append("\001").append(http_referer);
 		sb.append("\001").append(http_user_agent);
 		return sb.toString();
+	}
+
+	@Override
+	public void readFields(DataInput input) throws IOException {
+		remote_ip=input.readUTF();
+		remote_user=input.readUTF();
+		time_local=input.readUTF();
+		request=input.readUTF();
+		status=input.readUTF();
+		body_bytes_sent=input.readUTF();
+		http_referer=input.readUTF();
+		http_user_agent=input.readUTF();
+		valid=input.readBoolean();
+	}
+
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeUTF(remote_ip==null?"":remote_ip);
+		out.writeUTF(remote_user==null?"":remote_user);
+		out.writeUTF(time_local==null?"":time_local);
+		out.writeUTF(request==null?"":request);
+		out.writeUTF(status==null?"":status);
+		out.writeUTF(body_bytes_sent==null?"":body_bytes_sent);
+		out.writeUTF(http_referer==null?"":http_referer);
+		out.writeUTF(http_user_agent==null?"":http_user_agent);
+		out.writeBoolean(valid);
 	}
 }

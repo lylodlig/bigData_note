@@ -133,10 +133,10 @@ public class ClickStreamViews {
 				String session = UUID.randomUUID().toString();
 				for (int i = 0; i < beans.size(); i++) {
 					WeblogBean bean = beans.get(i);
-					// 只有一条数据直接输出,输出格式为：session user date url 停留时间 第几步
+					// 只有一条数据直接输出,输出格式为：session user date url 停留时间 第几步 来源url
 					if (beans.size() == 1) {
 						v.set(session + "\001" + bean.remote_ip + "\001" + bean.time_local + "\001" + bean.request
-								+ "\001" + "60" + "\001" + step);
+								+ "\001" + "60" + "\001" + step+"\001"+bean.http_referer);
 						context.write(NullWritable.get(), v);
 						session = UUID.randomUUID().toString();
 						break;
@@ -149,12 +149,12 @@ public class ClickStreamViews {
 					WeblogBean lastBaen = beans.get(i - 1);
 					if (timeDiff < 30 * 60 * 1000) {
 						v.set(session + "\001" + lastBaen.remote_ip + "\001" + lastBaen.time_local + "\001"
-								+ lastBaen.request + "\001" + timeDiff + "\001" + step);
+								+ lastBaen.request + "\001" + timeDiff + "\001" + step+"\001"+bean.http_referer);
 						step++;
 						context.write(NullWritable.get(), v);
 					} else {
 						v.set(session + "\001" + lastBaen.remote_ip + "\001" + lastBaen.time_local + "\001"
-								+ lastBaen.request + "\001" + timeDiff + "\001" + step);
+								+ lastBaen.request + "\001" + timeDiff + "\001" + step+"\001"+bean.http_referer);
 						context.write(NullWritable.get(), v);
 						// 输出完上一条重置step
 						step = 1;
@@ -163,7 +163,7 @@ public class ClickStreamViews {
 
 					if (i == beans.size() - 1) {// 最后一条，直接输出
 						v.set(session + "\001" + bean.remote_ip + "\001" + bean.time_local + "\001"
-								+ bean.request + "\001" + timeDiff + "\001" + step);
+								+ bean.request + "\001" + timeDiff + "\001" + step+"\001"+bean.http_referer);
 						context.write(NullWritable.get(), v);
 					}	
 
