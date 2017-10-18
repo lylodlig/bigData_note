@@ -1,0 +1,13 @@
+hive是基于hadoop的数据仓库工具，不是一个集群
+
+hive利用hdfs存储数据，mapreduce查询数据，执行的延迟比较高，处理数据规模大，适合批量数据统计分析
+
+创建内部表
+create table if not exists mytable(id int,name string)
+row format delimited fields terminated by '\001' store as textfile;
+
+创建外部表，外部表不在数据库内部，drop后元数据还在，只是删除了表结构
+create external table if not exists mytable(id int,name string comment 'describe')
+row format delimited by '\001' store as textfile;
+
+创建

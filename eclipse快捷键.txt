@@ -3,3 +3,12 @@ shfit+alt+a
 2ctrl+2 命名
 3窗口切换
 ctrl + pageUP/pageDown
+
+ctrl+shift+r：打开资源
+
+ctrl+o：快速outline
+
+ctrl+e：快速转换编辑器
+
+Shift+enter在当前行之下创建一个空白行，与光标是否在行末无关。
+
