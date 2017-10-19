@@ -44,6 +44,8 @@ sday=`date --date=$day_01 +%d`
 
 
 #读取日志文件的目录，判断是否有需要上传的文件
+# | grep 搜索一个命令输出中是否包含某个字符串
+# | wc -l 输出文件行数
 files=`hadoop fs -ls $log_flume_dir | grep $day_01 | wc -l`
 if [ $files -gt 0 ]; then
 hadoop fs -mv ${log_flume_dir}/${day_01} ${log_pre_input}

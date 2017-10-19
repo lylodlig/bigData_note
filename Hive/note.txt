@@ -10,4 +10,9 @@ row format delimited fields terminated by '\001' store as textfile;
 create external table if not exists mytable(id int,name string comment 'describe')
 row format delimited by '\001' store as textfile;
 
-创建
+创建分区表，导入数据时才产生分区
+create table student_p(Sno int,Sname string,Sex string,Sage int,Sdept string) partitioned by(part string,name string) row format delimited fields terminated by ','stored as textfile;
+//插入数据到表中，并且分区为China
+loaddata local inpath ‘/home/hadoop/sz.dat’ into table student_p partition(part=’China’);
+//添加分区,hdfs会创建对应的文件夹，每个分区有独立的文件夹，保存该分区所有数据
+alter table student_p add partition (part='2323',name='222');
